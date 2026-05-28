@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proposal - Complete Experience</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Padauk:wght@400;700&display=swap" rel="stylesheet">
+    
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.1.1/model-viewer.min.js"></script>
+    
+    <style>
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            background-color: #000; overflow: hidden; color: #fff;
+        }
+
+        /* --- LOADING & PART 1 --- */
+        #loading-screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: #050505; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; z-index: 100;
+            transition: opacity 1s ease; font-family: 'Cinzel', serif;
+        }
+        #loading-text { font-size: 1.5rem; letter-spacing: 3px; margin-bottom: 20px; text-align: center; }
+        #btn-start {
+            display: none; background: transparent; border: 1px solid #a0c4ff;
+            color: #a0c4ff; padding: 10px 30px; font-family: 'Cinzel', serif;
+            font-size: 1.5rem; cursor: pointer; text-transform: uppercase;
+            letter-spacing: 4px; transition: all 0.3s;
+        }
+        #btn-start:hover { background: rgba(160, 196, 255, 0.2); box-shadow: 0 0 20px rgba(160, 196, 255, 0.6); }
+
+        .video-bg {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            object-fit: cover; z-index: 1; transition: opacity 2s ease-in-out;
+        }
+        #looped-video { opacity: 0; }
+        
+        #part1-ui {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10;
+            display: flex; flex-direction: column; justify-content: space-between; 
+            padding: 80px; box-sizing: border-box; opacity: 0; transition: opacity 1s ease; pointer-events: none;
+        }
+        
+        .title {
+            align-self: flex-start; font-size: 6rem; font-weight: 700; margin: 0; font-family: 'Cinzel', serif;
+            background: linear-gradient(90deg, #ffffff, #a0c4ff, #ffffff, #a0c4ff);
+            background-size: 300% auto;
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            animation: slideDownFade 1.5s cubic-bezier(0.25, 0.8, 0.25, 1) forwards, 
+                       sparkleShine 3s linear infinite, floatText 4s ease-in-out infinite;
+            opacity: 0; filter: drop-shadow(0 0 20px rgba(160, 196, 255, 0.6));
+        }
+
+        .menu { align-self: flex-start; display: flex; flex-direction: column; gap: 25px; pointer-events: auto; }
+        button.menu-btn {
+            background: transparent; border: none; color: rgba(255, 255, 255, 0.6);
+            font-family: 'Cinzel', serif; font-size: 2rem; font-weight: 700; cursor: pointer;
+            text-align: left; padding: 0; text-transform: uppercase; letter-spacing: 6px;
+            position: relative; width: fit-content; opacity: 0;
+            animation: slideRightFade 1s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+            transition: color 0.4s, transform 0.4s;
+        }
+        button.menu-btn:nth-child(1) { animation-delay: 0.5s; }
+        button.menu-btn:nth-child(2) { animation-delay: 0.7s; }
+        button.menu-btn:nth-child(3) { animation-delay: 0.9s; }
+        button.menu-btn:hover { color: #ffffff; transform: translateX(30px) !important; text-shadow: 0 0 15px rgba(160, 196, 255, 0.8); }
+
+        /* --- PART 2: ALTERNATING CINEMATIC LAYOUT --- */
+        #black-screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; z-index: 80; display: none; opacity: 0; transition: opacity 0.5s ease;
+        }
+        #part2-container {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 20; opacity: 0; transition: opacity 2s ease; pointer-events: none;
+            display: flex; justify-content: center; align-items: center; padding: 5%; box-sizing: border-box;
+        }
+        #video1-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; opacity: 0.4; }
+        
+        #vfx-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, rgba(255, 105, 180, 0.15) 0%, rgba(0, 0, 0, 0.8) 50%, rgba(0, 212, 255, 0.1) 100%);
+            z-index: -1;
+        }
+
+        #dynamic-layout {
+            display: flex; align-items: center; justify-content: space-between;
+            width: 100%; max-width: 1300px; gap: 50px;
+        }
+        .layout-normal { flex-direction: row; }
+        .layout-reverse { flex-direction: row-reverse; }
+
+        #text-box {
+            flex: 1; max-width: 55%; 
+            display: flex; justify-content: center; align-items: center;
+        }
+        #subtitle-text {
+            font-family: 'Padauk', sans-serif; font-size: 1.6rem; line-height: 1.8; color: #fff;
+            background: rgba(20, 10, 30, 0.6); padding: 25px 35px; border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5), inset 0 0 15px rgba(255, 105, 180, 0.1); 
+            border: 1px solid rgba(255, 105, 180, 0.2);
+            text-shadow: 0 2px 10px rgba(0,0,0,0.8); max-height: 80vh;
+        }
+
+        #image-box { flex: 1; display: flex; justify-content: center; align-items: center; }
+        #image-wrapper {
+            width: 100%; max-width: 400px; aspect-ratio: 4/5; border-radius: 40px;
+            border: 2px solid rgba(255, 105, 180, 0.5);
+            box-shadow: 0 0 40px rgba(255, 105, 180, 0.3), 0 20px 40px rgba(0,0,0,0.8);
+            overflow: hidden; animation: floatImage 6s ease-in-out infinite; position: relative;
+        }
+
+        #memory-img {
+            width: 100%; height: 100%; object-fit: cover;
+            animation: slowPanZoom 15s alternate infinite ease-in-out; 
+        }
+
+        .slide-in-left { animation: slideInLeft 1s cubic-bezier(0.25, 0.8, 0.25, 1) forwards; }
+        .slide-in-right { animation: slideInRight 1s cubic-bezier(0.25, 0.8, 0.25, 1) forwards; }
+        .pop-in { animation: popIn 1.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+
+        @keyframes sparkleShine { to { background-position: 300% center; } }
+        @keyframes floatText { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        @keyframes floatImage { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-15px) rotate(1deg); } }
+        @keyframes slowPanZoom { 0% { transform: scale(1) translate(0, 0); } 100% { transform: scale(1.15) translate(-3%, 3%); } }
+        
+        @keyframes slideInLeft { from { opacity: 0; transform: translateX(-80px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes slideInRight { from { opacity: 0; transform: translateX(80px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes popIn { from { opacity: 0; transform: scale(0.8) translateY(20px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+        @keyframes slideDownFade { from { opacity: 0; transform: translateY(-50px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideRightFade { from { opacity: 0; transform: translateX(-50px); } to { opacity: 1; transform: translateX(0); } }
+
+        /* --- FLOWER BOMBING VFX --- */
+        .flower-bomb {
+            position: absolute; font-size: 2.5rem; pointer-events: none; z-index: 60;
+            transition: transform 1.5s cubic-bezier(0.25, 1, 0.5, 1), opacity 1.5s ease;
+        }
+
+        /* --- PROPOSAL SCREEN --- */
+        #proposal-screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 50; display: flex; flex-direction: column; justify-content: space-between;
+            align-items: center; padding: 8vh 0; opacity: 0; pointer-events: none; transition: opacity 2s ease;
+            background: url('final-bg.jpg') no-repeat center center; background-size: cover; box-sizing: border-box;
+        }
+        #proposal-screen::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); z-index: -1; }
+        
+        .proposal-text {
+            font-family: 'Padauk', 'Cinzel', serif; font-size: 2.2rem; line-height: 1.5;
+            max-width: 900px; text-shadow: 0 0 15px #ff9a9e; text-align: center; z-index: 1; margin: 0;
+        }
+        
+        #model-container { flex-grow: 1; width: 100%; display: flex; justify-content: center; align-items: center; z-index: 1; }
+        model-viewer { width: 100%; max-width: 600px; height: 40vh; outline: none; }
+
+        .btn-wrapper { width: 100%; display: flex; justify-content: center; gap: 40px; z-index: 10; pointer-events: auto; }
+        .action-btn {
+            background: rgba(0,0,0,0.7); border: 2px solid #fff; color: #fff;
+            padding: 15px 50px; font-family: 'Cinzel', serif; font-size: 2rem;
+            font-weight: bold; cursor: pointer; border-radius: 10px; transition: all 0.3s;
+        }
+        #btn-yes:hover, .action-btn:hover { background: #fff; color: #000; box-shadow: 0 0 30px #fff; }
+
+        /* --- PART 3: Q&A POST-PROPOSAL --- */
+        #part3-container {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 70; opacity: 0; transition: opacity 2s ease; pointer-events: none;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+        }
+        #video2-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; opacity: 0.5; }
+        #part3-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.9) 100%); z-index: -1;
+        }
+
+        .q-text {
+            font-family: 'Padauk', 'Cinzel', serif; font-size: 2.5rem; line-height: 1.6;
+            max-width: 800px; text-shadow: 0 0 20px #ff9a9e, 0 0 40px #fecfef;
+            text-align: center; margin-bottom: 50px; z-index: 1;
+        }
+        
+        #q-input-container { display: none; flex-direction: column; align-items: center; width: 100%; z-index: 1; }
+        #q-textarea {
+            width: 80%; max-width: 600px; height: 150px;
+            background: rgba(20, 10, 30, 0.7); color: #fff; font-family: 'Padauk', sans-serif; font-size: 1.5rem;
+            padding: 20px; border-radius: 15px; border: 2px solid rgba(255, 105, 180, 0.5);
+            box-shadow: 0 0 30px rgba(255, 105, 180, 0.2); outline: none; resize: none;
+            margin-bottom: 30px;
+        }
+        #q-textarea:focus { border-color: #fff; box-shadow: 0 0 40px rgba(255, 255, 255, 0.5); }
+
+        .heart-bomb {
+            position: absolute; font-size: 3rem; pointer-events: none; z-index: 75;
+            transition: transform 1.5s cubic-bezier(0.25, 1, 0.5, 1), opacity 1.5s ease;
+        }
+        
+        #final-message {
+            font-family: 'Cinzel', serif; font-size: 3.5rem; text-align: center;
+            text-shadow: 0 0 30px #ff9a9e; display: none; opacity: 0; transition: opacity 2s ease;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="loading-screen">
+        <div id="loading-text">Downloading Data...</div>
+        <button id="btn-start">Enter Experience</button>
+    </div>
+
+    <video id="cinematic-video" class="video-bg" src="Cinimatic Intro.mp4" muted playsinline></video>
+    <video id="looped-video" class="video-bg" src="Looped Intro.mp4" muted loop playsinline></video>
+    
+    <div id="part1-ui">
+        <h1 class="title">999% Loved by Ishigami</h1>
+        <div class="menu">
+            <button id="btn-play" class="menu-btn">Play</button>
+            <button id="btn-setting" class="menu-btn">Setting</button>
+            <button id="btn-contacts" class="menu-btn">Contacts</button>
+        </div>
+    </div>
+
+    <div id="black-screen"></div>
+
+    <div id="part2-container">
+        <video id="video1-bg" src="video1.mp4" muted loop playsinline></video>
+        <div id="vfx-overlay"></div> 
+
+        <div id="dynamic-layout" class="layout-normal">
+            <div id="text-box">
+                <div id="subtitle-text"></div>
+            </div>
+            <div id="image-box">
+                <div id="image-wrapper">
+                    <img id="memory-img" src="" onerror="this.onerror=null; this.src='image1.jpg';">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="proposal-screen">
+        <h1 class="proposal-text" id="final-question"></h1>
+        
+        <div id="model-container">
+            <model-viewer src="flower.glb" auto-rotate rotation-per-second="30deg" camera-controls disable-zoom></model-viewer>
+        </div>
+
+        <div class="btn-wrapper">
+            <button id="btn-yes" class="action-btn">YES</button>
+            <button id="btn-no" class="action-btn">NO</button>
+        </div>
+    </div>
+
+    <div id="part3-container">
+        <video id="video2-bg" src="video2.mp4" muted loop playsinline></video>
+        <div id="part3-overlay"></div>
+        
+        <h1 class="q-text" id="question-text"></h1>
+        
+        <div class="btn-wrapper" id="q-btn-container">
+            <button id="btn-yes3" class="action-btn">YES</button>
+            <button id="btn-no3" class="action-btn">NO</button>
+        </div>
+
+        <div id="q-input-container">
+            <textarea id="q-textarea" placeholder="Type your feelings here..."></textarea>
+            <button id="btn-submit3" class="action-btn">Submit</button>
+        </div>
+        
+        <h1 id="final-message">Thank you. I love you forever.</h1>
+    </div>
+
+    <audio id="intro-music-1" src="intromusic1.mp3"></audio>
+    <audio id="intro-music-2" src="intromusic2.mp3" loop></audio>
+    <audio id="sfx-impact" src="impact.mp3"></audio>
+    <audio id="bgm-song" src="YoungAndBeautiful.mp3"></audio>
+    <audio id="audio2" src="audio2.mp3" loop></audio>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const loadingScreen = document.getElementById('loading-screen');
+            const btnStart = document.getElementById('btn-start');
+            const cinematicVideo = document.getElementById('cinematic-video');
+            const loopedVideo = document.getElementById('looped-video');
+            const part1Ui = document.getElementById('part1-ui');
+            const blackScreen = document.getElementById('black-screen');
+            const part2Container = document.getElementById('part2-container');
+            const video1Bg = document.getElementById('video1-bg');
+            
+            const dynamicLayout = document.getElementById('dynamic-layout');
+            const textBox = document.getElementById('text-box');
+            const subtitleEl = document.getElementById('subtitle-text');
+            const imageBox = document.getElementById('image-box');
+            const memoryImg = document.getElementById('memory-img');
+            
+            const proposalScreen = document.getElementById('proposal-screen');
+            const finalQuestion = document.getElementById('final-question');
+            const btnPlay = document.getElementById('btn-play');
+            const btnYes = document.getElementById('btn-yes');
+            const btnNo = document.getElementById('btn-no');
+
+            // Part 3 Elements
+            const part3Container = document.getElementById('part3-container');
+            const video2Bg = document.getElementById('video2-bg');
+            const qText = document.getElementById('question-text');
+            const qBtnContainer = document.getElementById('q-btn-container');
+            const qInputContainer = document.getElementById('q-input-container');
+            const btnYes3 = document.getElementById('btn-yes3');
+            const btnNo3 = document.getElementById('btn-no3');
+            const btnSubmit3 = document.getElementById('btn-submit3');
+            const finalMessage = document.getElementById('final-message');
+
+            const music1 = document.getElementById('intro-music-1');
+            const music2 = document.getElementById('intro-music-2');
+            const sfxImpact = document.getElementById('sfx-impact');
+            const bgmSong = document.getElementById('bgm-song');
+            const audio2 = document.getElementById('audio2');
+
+            let part1Timeout, fadeInterval;
+            let activeIndex = -1;
+            let transitionTriggered = false;
+
+            const scriptData = [
+                { start: 0, end: 7.9, img: 'image12.jpg', text: "ကျွန်တော်ဒီ Website လေးကို ကိုယ်တိုင်အပင်ပန်းခံပြီးဘာလို့လုပ်လဲဆိုတာသိချင်နေကြမယ်လို့ ကျွန်တော်ယုံကြည်ပါတယ်" },
+                { start: 8, end: 14.9, img: 'image15.jpg', text: "အဲ့တာတွေမပြောခင် ကျွန်တော် တကယ့်ဖြစ်ရပ်မှန်ပုံပြင်လေးပြောပြပါရစေ" },
+                { start: 15, end: 25.9, img: 'image6.jpg', text: "ကျွန်တော်သူ့ကို ကိုစတွေ့ခဲ့တာ Kamikaze Synergy လို့ခေါ်တဲ့ Evade Clan တစ်ခုကနေပါ စတွေ့ရာကနေ ဂိမ်းတွေအတူတူဆော့ရင်း ခင်သွားခဲ့ကြတယ်" },
+                { start: 26, end: 40.9, img: 'image1.jpg', text: "အဲ့ဒီနောက် ကျွန်တော်တို့တွေ အတူတူ စကားတွေပြောဖြစ်လာရင် တစ်ယောက်နဲ့တစ်ယောက်ရင်ဖွင့်လာကြတယ် အဲ့ဒီနောက် ကျွန်တော်ဘက်က သူငယ်ချင်းဆိုတာထပ်ကိုပိုတဲ့စိတ်ခံစားချက်တွေရှိလာခဲ့တယ်" },
+                { start: 41, end: 51.9, img: 'image2.jpg', text: "အဲ့ဒီနောက် ကျွန်တော်မထင်မှတ်ထားပဲ ဖွင့်ပြောလိုက်မိတယ် သူကလဲ ကျွန်တော်အပေါ်ထပ်တူညီတဲ့စိတ်ရှိခဲ့တယ်ဆိုတော့ကျွန်တော်ကိုလက်ခံခဲ့ပါတယ်" },
+                { start: 52, end: 60.9, img: 'image3.jpg', text: "နောက်တော့ ကျွန်တော်တို့တွေ တစ်နေ့တစ်နေ့ ဂိမ်းတွေအတူတူဆော့ရင်းအချိန်တွေအတူတူကုန်ဆုံးခဲ့တယ်" },
+                { start: 61, end: 74.9, img: 'image4.jpg', text: "ကျွန်တော်တို့တွေ အစပိုင်းပြဿနာတွေအများကြီးတက်ခဲ့ပါတယ် ဒါပင်မဲ့ သူလဲလက်မလျှော့ခဲ့သလို ကျွန်တော်ဘက်ကလဲလက်မလျှော့ခဲ့ပါဘူး" },
+                { start: 75, end: 89.9, img: 'image5.jpg', text: "တစ်ယောက်ကိုတစ်ယောက်ဆွဲရင်း ပြဿနာတွေကိုအတူတူဖြေရှင်းပြီးအတူတူ‌ရှေ့ဆက်ခဲ့ပါတယ် အဲ့လိုနဲ့အခုဆိုရင် ကျွန်တော်တို့ချစ်ခြင်းမေတ္တာစိတ်သက်ဝင်တာ ၃ လပြည့်ပါပြီ" },
+                { start: 90, end: 104.9, img: 'image7.jpg', text: "ကျွန်တော်ဘဝမှာ တခါမှမခံစားဖူးတဲ့ခံစားချက် မရင်းနီးတဲ့အတွေးတွေနဲ့ မချစ်ဖူးတဲ့အချစ်နဲ့ ချစ်ခဲ့မိပါတယ် ကျွန်တော်လို Overthinker တစ်ယောက်ကို လက်ခံပေးပြီးချစ်ပေးလို့လဲ ကျွန်တော်အရမ်းဝမ်းသာရပါတယ်" },
+                { start: 105, end: 119.9, img: 'image8.jpg', text: "တစ်ယောက်ပေါ်ချစ်တဲ့ချစ်တွေကပိုပိုပြီးတော့များလာပါတယ် အဲ့လိုနဲ့ အဆင်မပြေတာတွေရှိလာတဲ့အခါတွေမှာလဲ ပြောင်းလဲသင့်တာတွေပြောင်းလဲပေးဖို့ ဝန်မလေးခဲ့ပါဘူး" },
+                { start: 120, end: 134.9, img: 'image9.jpg', text: "သူက ကလေးစိတ်ဆိုတော့ ကျွန်တော်မှာစိတ်ပူလိုက်ရတာလဲအမောပါ တခါတလေ ကျွန်တော်စိတ်ပူလွန်းလို့ပြဿနာတွေရှာခဲ့ပါတယ် ဒါမဲ့သူကစိတ်ကုန်မသွားပဲ တူညီတဲ့အချစ်နဲ့ဆက်ချစ်နေပေးခဲ့တယ် နောက်သူကျောင်းတက်တဲ့အခါ ကျွန်တော်က ပိုပြီးတော့စိတ်ပူပေးရဦးမှာ ကိုယ့်မှာကတစ်ယောက်ရှိတဲ့အပြင်သူ့ကိုပဲ အများကြီးမျှော်လင့် ပုံအပ်ထားတော့ ကျွန်တော်ဘဝကြီးလိုဖြစ်နေတာပေါ့ဗျာ" },
+                { start: 135, end: 147.9, img: 'image10.jpg', text: "ကျွန်တော်ကမပြည့်စုံတဲ့လူ လုပ်ချင်တာထပ်လုပ်သင့်တာကိုဦးစားပေးရမဲ့လူမလို့ သူ့ကိုတော့ ဥစ္စာပြည့်ဝအောင်မထားနိုင်သေးပင်မဲ့လေ နောင်တချိန်ကြရင် လိုလေသိမ်းမရှိအောင် ထားပေးမယ်လို့ ကျိန်ဆိုပါတယ် ကျွန်တော်ကမပြည့်စုံရင်တောင်လေ ကျွန်တော်သူ့ကို ဘာနဲ့မှမတူတောင် ထိပ်ဆုံးမှာထားပြီး ဘုရင်မတပါးလို ချစ်ပေးနိုင်ပါတယ်" }
+            ];
+
+            const finalQuestions = [
+                { start: 148, end: 155.9, text: "ကဲ အမျိုးသမီးလေးကရော ကျွန်တော်ရဲ့အားနည်းချက်တွေကိုအကုန်လုံးကိုလက်ခံပြီးတော့ ကျွန်တော့်ကိုယုံကြည်ပေးနိုင်မလား ချစ်ပေးနိုင်မလား?" },
+                { start: 156, end: 300, text: "ကိုမင်းကိုတကယ်ရေရှည်ထိလက်တွဲဖို့စိတ်ကူးထားတာမလို့ ကိုကို့ ကိုအများကြီးချစ်ပေးပါဦးနော်<br><br><span style='font-family: Cinzel; font-size: 1.5em; font-weight: bold;'>WILL YOU MARRY ME?</span>" }
+            ];
+
+            // Part 3 Data
+            const part3Questions = [
+                { type: 'choice', text: "Do you like the way I propose you?" },
+                { type: 'choice', text: "Can you love me forever?" },
+                { type: 'choice', text: "Do you know I always think about how weak am I and sometime I got motivation from you but I just wonder can you actually accept me?" },
+                { type: 'input', text: "What do you think about me?" }
+            ];
+            let currentQIndex = 0;
+
+            setTimeout(() => {
+                document.getElementById('loading-text').innerText = "Data Loaded Successfully";
+                btnStart.style.display = "block";
+            }, 2000); 
+
+            btnStart.addEventListener('click', () => {
+                loadingScreen.style.opacity = '0';
+                setTimeout(() => loadingScreen.style.display = 'none', 1000);
+                cinematicVideo.play(); music1.play(); part1Ui.style.opacity = '1';
+
+                part1Timeout = setTimeout(() => {
+                    cinematicVideo.style.opacity = '0'; loopedVideo.style.opacity = '1'; loopedVideo.play(); music2.play();
+                    let vol = 1; fadeInterval = setInterval(() => { if (vol > 0.05) { vol -= 0.05; music1.volume = vol; } else { clearInterval(fadeInterval); music1.pause(); } }, 150); 
+                    setTimeout(() => cinematicVideo.pause(), 2000);
+                }, 15000); 
+            });
+
+            btnPlay.addEventListener('click', () => {
+                bgmSong.play().then(() => { bgmSong.pause(); bgmSong.currentTime = 0; }).catch(()=>{});
+                video1Bg.play().then(() => { video1Bg.pause(); video1Bg.currentTime = 0; }).catch(()=>{});
+                audio2.play().then(() => { audio2.pause(); audio2.currentTime = 0; }).catch(()=>{});
+                video2Bg.play().then(() => { video2Bg.pause(); video2Bg.currentTime = 0; }).catch(()=>{});
+
+                clearTimeout(part1Timeout); clearInterval(fadeInterval);
+                cinematicVideo.pause(); loopedVideo.pause(); music1.pause(); music2.pause();
+
+                part1Ui.style.display = 'none'; blackScreen.style.display = 'flex'; blackScreen.style.opacity = '1'; sfxImpact.play();
+
+                setTimeout(() => {
+                    blackScreen.style.opacity = '0'; setTimeout(() => blackScreen.style.display = 'none', 500);
+                    part2Container.style.opacity = '1'; video1Bg.play(); bgmSong.play();
+                }, 3000);
+            });
+
+            function triggerFlowerBomb() {
+                for(let i = 0; i < 70; i++) {
+                    let f = document.createElement('div');
+                    f.classList.add('flower-bomb');
+                    f.innerHTML = ['🌸', '🌺', '🌹', '✨', '💖'][Math.floor(Math.random() * 5)];
+                    f.style.left = '50%'; f.style.top = '50%';
+                    document.body.appendChild(f);
+                    
+                    setTimeout(() => {
+                        let angle = Math.random() * Math.PI * 2;
+                        let dist = Math.random() * 800 + 200;
+                        f.style.transform = `translate(${Math.cos(angle)*dist}px, ${Math.sin(angle)*dist}px) scale(${Math.random()*2.5+1}) rotate(${Math.random()*360}deg)`;
+                        f.style.opacity = '0';
+                    }, 20);
+                    setTimeout(() => f.remove(), 1600);
+                }
+            }
+
+            function triggerHeartBomb() {
+                for(let i = 0; i < 50; i++) {
+                    let h = document.createElement('div');
+                    h.classList.add('heart-bomb');
+                    h.innerHTML = ['❤️', '💖', '💕', '💘'][Math.floor(Math.random() * 4)];
+                    h.style.left = '50%'; h.style.top = '50%';
+                    part3Container.appendChild(h);
+                    
+                    setTimeout(() => {
+                        let angle = Math.random() * Math.PI * 2;
+                        let dist = Math.random() * 600 + 200;
+                        h.style.transform = `translate(${Math.cos(angle)*dist}px, ${Math.sin(angle)*dist}px) scale(${Math.random()*2+1})`;
+                        h.style.opacity = '0';
+                    }, 20);
+                    setTimeout(() => h.remove(), 1600);
+                }
+            }
+
+            bgmSong.addEventListener('timeupdate', () => {
+                let t = bgmSong.currentTime;
+
+                if (t < 148) {
+                    let newIndex = scriptData.findIndex(item => t >= item.start && t <= item.end);
+                    
+                    if (newIndex !== -1 && newIndex !== activeIndex) {
+                        activeIndex = newIndex;
+                        let currentData = scriptData[activeIndex];
+
+                        if (activeIndex % 2 === 0) {
+                            dynamicLayout.classList.remove('layout-reverse');
+                            dynamicLayout.classList.add('layout-normal');
+                        } else {
+                            dynamicLayout.classList.remove('layout-normal');
+                            dynamicLayout.classList.add('layout-reverse');
+                        }
+
+                        textBox.classList.remove('slide-in-left', 'slide-in-right');
+                        imageBox.classList.remove('pop-in');
+                        void textBox.offsetWidth; 
+
+                        subtitleEl.innerHTML = currentData.text;
+                        memoryImg.style.animation = 'none';
+                        memoryImg.src = currentData.img;
+                        setTimeout(() => memoryImg.style.animation = 'slowPanZoom 15s alternate infinite ease-in-out', 50);
+
+                        textBox.classList.add(activeIndex % 2 === 0 ? 'slide-in-left' : 'slide-in-right');
+                        imageBox.classList.add('pop-in');
+                    } else if (newIndex === -1) {
+                        subtitleEl.innerHTML = ""; memoryImg.src = ""; activeIndex = -1;
+                    }
+                }
+
+                if (t >= 148 && !transitionTriggered) {
+                    transitionTriggered = true;
+                    triggerFlowerBomb();
+                    
+                    part2Container.style.opacity = '0';
+                    setTimeout(() => part2Container.style.display = 'none', 1000);
+                    
+                    proposalScreen.style.pointerEvents = 'auto';
+                    proposalScreen.style.opacity = '1';
+                }
+
+                if (t >= 148) {
+                    let currentFinal = finalQuestions.find(sub => t >= sub.start && t <= sub.end);
+                    if (currentFinal && finalQuestion.innerHTML !== currentFinal.text) {
+                        finalQuestion.style.opacity = '0';
+                        setTimeout(() => {
+                            finalQuestion.innerHTML = currentFinal.text;
+                            finalQuestion.style.opacity = '1';
+                        }, 100);
+                    }
+                }
+            });
+
+            // PART 3 TRANSITION LOGIC
+            btnYes.addEventListener('click', () => {
+                bgmSong.pause(); video1Bg.pause();
+                proposalScreen.style.display = 'none';
+                
+                blackScreen.style.display = 'flex'; 
+                blackScreen.style.opacity = '1';
+                
+                sfxImpact.currentTime = 0;
+                sfxImpact.play();
+
+                setTimeout(() => {
+                    blackScreen.style.opacity = '0';
+                    setTimeout(() => blackScreen.style.display = 'none', 500);
+                    
+                    part3Container.style.pointerEvents = 'auto';
+                    part3Container.style.opacity = '1';
+                    
+                    video2Bg.play();
+                    audio2.play();
+                    
+                    loadQuestion(currentQIndex);
+                }, 3000);
+            });
+
+            btnNo.addEventListener('mouseover', () => {
+                const maxX = window.innerWidth - btnNo.clientWidth - 20;
+                const maxY = window.innerHeight - btnNo.clientHeight - 20;
+                btnNo.style.position = 'fixed';
+                btnNo.style.left = `${Math.max(10, Math.random() * maxX)}px`;
+                btnNo.style.top = `${Math.max(10, Math.random() * maxY)}px`;
+            });
+
+            // PART 3 Q&A LOGIC
+            function loadQuestion(index) {
+                if(index >= part3Questions.length) return;
+                
+                let q = part3Questions[index];
+                qText.style.opacity = '0';
+                
+                setTimeout(() => {
+                    qText.innerHTML = q.text;
+                    qText.style.opacity = '1';
+                    
+                    if(q.type === 'choice') {
+                        qBtnContainer.style.display = 'flex';
+                        qInputContainer.style.display = 'none';
+                    } else if (q.type === 'input') {
+                        qBtnContainer.style.display = 'none';
+                        qInputContainer.style.display = 'flex';
+                    }
+                }, 500);
+            }
+
+            btnYes3.addEventListener('click', () => {
+                triggerHeartBomb();
+                qBtnContainer.style.display = 'none';
+                
+                setTimeout(() => {
+                    currentQIndex++;
+                    loadQuestion(currentQIndex);
+                }, 1500);
+            });
+
+            btnNo3.addEventListener('mouseover', () => {
+                const maxX = window.innerWidth - btnNo3.clientWidth - 20;
+                const maxY = window.innerHeight - btnNo3.clientHeight - 20;
+                btnNo3.style.position = 'fixed';
+                btnNo3.style.left = `${Math.max(10, Math.random() * maxX)}px`;
+                btnNo3.style.top = `${Math.max(10, Math.random() * maxY)}px`;
+            });
+
+            btnSubmit3.addEventListener('click', () => {
+                qText.style.display = 'none';
+                qInputContainer.style.display = 'none';
+                
+                finalMessage.style.display = 'block';
+                setTimeout(() => {
+                    finalMessage.style.opacity = '1';
+                }, 100);
+                triggerHeartBomb();
+            });
+
+        });
+    </script>
+</body>
+</html>
